@@ -23,6 +23,28 @@ a typed HTTP layer, and unit-tested business logic).
 > `server/data`, so changes survive a page refresh. To reset to the seed data, run
 > `git checkout server/data`.
 
+## Screenshots
+
+### Dashboard
+Portfolio value, gain/loss, asset allocation and top holdings.
+
+![Dashboard](screenshots/dashboard.png)
+
+### Holdings
+Every position with live market value and gain/loss, plus add / edit / sell actions.
+
+![Holdings](screenshots/holdings.png)
+
+### Transactions
+Buy / sell / dividend history with a filter by type.
+
+![Transactions](screenshots/transactions.png)
+
+### Profile
+Personal details and full CRUD on contacts.
+
+![Profile](screenshots/profile.png)
+
 ## Features
 
 - **Dashboard** — total value, total gain/loss, an asset-class allocation bar, and top holdings.
