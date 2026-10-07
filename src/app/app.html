@@ -1,36 +1,39 @@
-<header class="app-bar">
-  <div class="app-bar__brand">
-    <span class="app-bar__mark" aria-hidden="true">◆</span>
+<header class="flex flex-wrap items-center gap-x-6 gap-y-3 bg-slate-900 px-6 py-3.5 text-white">
+  <div class="flex items-center gap-3">
+    <span class="text-2xl text-emerald-500" aria-hidden="true">◆</span>
     <div>
-      <h1>Portfolio<span>Pro</span></h1>
-      <p>Investment dashboard</p>
+      <h1 class="text-lg font-bold">Portfolio<span class="text-emerald-500">Pro</span></h1>
+      <p class="text-xs text-white/60">Investment dashboard</p>
     </div>
   </div>
 
-  <div class="app-bar__value">
-    <span class="app-bar__value-label">Total value</span>
-    <strong>{{ summary().totalValue | currency }}</strong>
+  <div class="ml-auto text-right leading-tight">
+    <span class="block text-[0.7rem] uppercase tracking-wider text-white/60">Total value</span>
+    <strong class="text-xl tabular-nums">{{ summary().totalValue | currency }}</strong>
   </div>
 
-  <button
-    type="button"
-    class="feed-toggle"
-    [class.feed-toggle--on]="isLive()"
-    (click)="toggleLive()"
+  <a
+    routerLink="/profile"
+    class="flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-2 py-1.5 pr-4 no-underline transition-colors hover:bg-white/10"
   >
-    <span class="feed-toggle__dot" aria-hidden="true"></span>
-    {{ isLive() ? 'Live feed on' : 'Start live feed' }}
-  </button>
+    <span
+      class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold uppercase text-white"
+    >
+      {{ initials() }}
+    </span>
+    <span class="text-sm font-semibold text-white">{{ profile().fullName }}</span>
+  </a>
 </header>
 
-<nav class="app-nav" aria-label="Primary">
-  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+<nav class="flex gap-1 border-b border-slate-200 bg-white px-6" aria-label="Primary">
+  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
     Dashboard
   </a>
-  <a routerLink="/holdings" routerLinkActive="active">Holdings</a>
-  <a routerLink="/transactions" routerLinkActive="active">Transactions</a>
+  <a routerLink="/holdings" routerLinkActive="active" class="nav-link">Holdings</a>
+  <a routerLink="/transactions" routerLinkActive="active" class="nav-link">Transactions</a>
+  <a routerLink="/profile" routerLinkActive="active" class="nav-link">Profile</a>
 </nav>
 
-<main class="app-main">
+<main class="mx-auto max-w-5xl px-6 pb-12 pt-7">
   <router-outlet />
 </main>

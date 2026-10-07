@@ -5,11 +5,11 @@ import { TransactionType } from '../../models/portfolio.models';
 
 type Filter = 'ALL' | TransactionType;
 
+// Transactions view: shows the activity history with a filter by transaction type.
 @Component({
   selector: 'app-transactions',
   imports: [CurrencyPipe, DatePipe, DecimalPipe],
   templateUrl: './transactions.html',
-  styleUrl: './transactions.scss',
 })
 export class Transactions {
   private readonly portfolio = inject(PortfolioService);
@@ -33,6 +33,6 @@ export class Transactions {
   }
 
   protected badgeClass(type: TransactionType): string {
-    return `badge badge--${type.toLowerCase()}`;
+    return `badge badge-${type.toLowerCase()}`;
   }
 }

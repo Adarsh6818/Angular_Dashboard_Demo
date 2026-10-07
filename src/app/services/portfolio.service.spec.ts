@@ -57,6 +57,21 @@ describe('PortfolioService', () => {
     expect(nvda?.avgCost).toBeCloseTo(120, 6);
   });
 
+  it('updates an existing holding in place', () => {
+    const aapl = service.holdingViews().find((h) => h.symbol === 'AAPL')!;
+    service.updateHolding(aapl.id, {
+      symbol: 'AAPL',
+      name: 'Apple Inc.',
+      assetClass: 'Equity',
+      quantity: 50,
+      price: 200,
+    });
+    const updated = service.holdingViews().find((h) => h.id === aapl.id);
+    expect(updated?.quantity).toBe(50);
+    expect(updated?.currentPrice).toBe(200);
+    expect(updated?.marketValue).toBeCloseTo(50 * 200, 2);
+  });
+
   it('removes a position when fully sold and logs a SELL', () => {
     const nvda = service.holdingViews().find((h) => h.symbol === 'NVDA')!;
     service.sellHolding(nvda.id, nvda.quantity);

@@ -1,14 +1,18 @@
-<div class="page-head">
-  <h2>Transactions</h2>
-  <p>Your buys, sells and dividends. New activity from the Holdings page appears here.</p>
+<div class="mb-5">
+  <h2 class="text-2xl">Transactions</h2>
+  <p class="mt-1 text-slate-500">Your buys, sells and dividends. New activity from the Holdings page appears here.</p>
 </div>
 
-<div class="filter-row">
+<div class="mb-4 flex flex-wrap gap-2">
   @for (f of filters; track f) {
     <button
       type="button"
-      class="chip"
-      [class.chip--active]="activeFilter() === f"
+      class="cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors"
+      [class]="
+        activeFilter() === f
+          ? 'border-emerald-700 bg-emerald-700 text-white'
+          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+      "
       (click)="setFilter(f)"
     >
       {{ f === 'ALL' ? 'All' : f }}
@@ -17,34 +21,34 @@
 </div>
 
 <div class="card">
-  <div class="table-scroll">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Type</th>
-        <th>Symbol</th>
-        <th class="num">Quantity</th>
-        <th class="num">Price</th>
-        <th class="num">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (t of visible(); track t.id) {
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead>
         <tr>
-          <td>{{ t.date | date: 'mediumDate' }}</td>
-          <td><span [class]="badgeClass(t.type)">{{ t.type }}</span></td>
-          <td><strong>{{ t.symbol }}</strong></td>
-          <td class="num">{{ t.quantity | number: '1.0-4' }}</td>
-          <td class="num">{{ t.price | currency }}</td>
-          <td class="num">{{ amount(t.quantity, t.price) | currency }}</td>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Symbol</th>
+          <th class="num">Quantity</th>
+          <th class="num">Price</th>
+          <th class="num">Amount</th>
         </tr>
-      } @empty {
-        <tr>
-          <td colspan="6" class="empty">No transactions for this filter.</td>
-        </tr>
-      }
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        @for (t of visible(); track t.id) {
+          <tr>
+            <td>{{ t.date | date: 'mediumDate' }}</td>
+            <td><span [class]="badgeClass(t.type)">{{ t.type }}</span></td>
+            <td><strong>{{ t.symbol }}</strong></td>
+            <td class="num">{{ t.quantity | number: '1.0-4' }}</td>
+            <td class="num">{{ t.price | currency }}</td>
+            <td class="num">{{ amount(t.quantity, t.price) | currency }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="py-8 text-center text-slate-500">No transactions for this filter.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </div>
 </div>

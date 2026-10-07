@@ -3,11 +3,11 @@ import { CurrencyPipe, PercentPipe } from '@angular/common';
 import { PortfolioService } from '../../services/portfolio.service';
 import { AssetClass } from '../../models/portfolio.models';
 
+// Dashboard view: shows portfolio summary cards, asset allocation and top holdings.
 @Component({
   selector: 'app-dashboard',
   imports: [CurrencyPipe, PercentPipe],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
 })
 export class Dashboard {
   private readonly portfolio = inject(PortfolioService);
@@ -24,9 +24,9 @@ export class Dashboard {
 }
 
 const ASSET_COLORS: Record<AssetClass, string> = {
-  Equity: '#117a3d',
-  ETF: '#1a9b4e',
+  Equity: '#047857',
+  ETF: '#10b981',
   Bond: '#4f86c6',
-  Cash: '#9aa6a0',
+  Cash: '#94a3b8',
   Crypto: '#d08700',
 };

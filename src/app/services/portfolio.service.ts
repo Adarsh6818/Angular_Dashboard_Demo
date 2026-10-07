@@ -1,5 +1,4 @@
 import { computed, Injectable, signal } from '@angular/core';
-import { interval, Subscription } from 'rxjs';
 import {
   AllocationSlice,
   AssetClass,
@@ -10,23 +9,11 @@ import {
   Transaction,
 } from '../models/portfolio.models';
 
-/**
- * Single source of truth for portfolio state.
- *
- * State is held in Angular signals and all derived values (summary, allocation,
- * per-holding gain/loss) are exposed as `computed` signals, so the UI stays in
- * sync automatically without manual change detection or subscriptions.
- *
- * In a real app the seed data and `tickPrices()` below would be replaced by an
- * HttpClient call to a backend / market-data feed; the public API would not change.
- */
+// Single source of truth for portfolio state, exposed as signals + computed values.
 @Injectable({ providedIn: 'root' })
 export class PortfolioService {
   private readonly holdingsState = signal<Holding[]>(SEED_HOLDINGS);
   private readonly transactionsState = signal<Transaction[]>(SEED_TRANSACTIONS);
-  private readonly liveState = signal(false);
-
-  private tickSub?: Subscription;
 
   /** Raw holdings (read-only to consumers). */
   readonly holdings = this.holdingsState.asReadonly();
@@ -35,9 +22,6 @@ export class PortfolioService {
   readonly transactions = computed(() =>
     [...this.transactionsState()].sort((a, b) => b.date.localeCompare(a.date)),
   );
-
-  /** Whether the simulated price feed is currently running. */
-  readonly isLive = this.liveState.asReadonly();
 
   /** Holdings enriched with market value / gain-loss / weight, richest first. */
   readonly holdingViews = computed<HoldingView[]>(() => {
@@ -94,10 +78,7 @@ export class PortfolioService {
     this.holdingsState().reduce((sum, h) => sum + h.quantity * h.currentPrice, 0),
   );
 
-  /**
-   * Add a new holding (or top up an existing one) and log a BUY transaction.
-   * Average cost is recalculated when adding to an existing position.
-   */
+  /** CREATE: add a new holding (or top up an existing one) and log a BUY transaction. */
   addHolding(input: NewHoldingInput): void {
     const symbol = input.symbol.trim().toUpperCase();
 
@@ -130,7 +111,26 @@ export class PortfolioService {
     this.logTransaction('BUY', symbol, input.quantity, input.price);
   }
 
-  /** Sell (reduce or remove) a position and log a SELL transaction. */
+  /** UPDATE: edit an existing holding's editable fields in place. */
+  updateHolding(id: string, input: NewHoldingInput): void {
+    this.holdingsState.update((holdings) =>
+      holdings.map((h) =>
+        h.id === id
+          ? {
+              ...h,
+              symbol: input.symbol.trim().toUpperCase(),
+              name: input.name.trim(),
+              assetClass: input.assetClass,
+              quantity: input.quantity,
+              avgCost: input.price,
+              currentPrice: input.price,
+            }
+          : h,
+      ),
+    );
+  }
+
+  /** DELETE: sell (reduce or remove) a position and log a SELL transaction. */
   sellHolding(id: string, quantity: number): void {
     const holding = this.holdingsState().find((h) => h.id === id);
     if (!holding) return;
@@ -143,29 +143,6 @@ export class PortfolioService {
     );
 
     this.logTransaction('SELL', holding.symbol, soldQty, holding.currentPrice);
-  }
-
-  /** Toggle the simulated real-time price feed on/off. */
-  toggleLivePrices(): void {
-    if (this.liveState()) {
-      this.tickSub?.unsubscribe();
-      this.tickSub = undefined;
-      this.liveState.set(false);
-      return;
-    }
-    this.liveState.set(true);
-    this.tickSub = interval(1500).subscribe(() => this.tickPrices());
-  }
-
-  /** Nudge every price by a small random amount to mimic a market data stream. */
-  tickPrices(): void {
-    this.holdingsState.update((holdings) =>
-      holdings.map((h) => {
-        if (h.assetClass === 'Cash') return h;
-        const drift = 1 + (Math.random() - 0.5) * 0.02; // ±1%
-        return { ...h, currentPrice: round2(h.currentPrice * drift) };
-      }),
-    );
   }
 
   private logTransaction(
@@ -186,10 +163,6 @@ export class PortfolioService {
       ...txns,
     ]);
   }
-}
-
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
 }
 
 const SEED_HOLDINGS: Holding[] = [

@@ -25,7 +25,7 @@ describe('App shell', () => {
   it('should render the primary navigation', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
-    const links = (fixture.nativeElement as HTMLElement).querySelectorAll('.app-nav a');
-    expect(links.length).toBe(3);
+    const links = (fixture.nativeElement as HTMLElement).querySelectorAll('nav a');
+    expect(links.length).toBe(4);
   });
 });

@@ -1,42 +1,42 @@
-<div class="page-head">
-  <h2>Dashboard</h2>
-  <p>A snapshot of your portfolio's value, performance and allocation.</p>
+<div class="mb-5">
+  <h2 class="text-2xl">Dashboard</h2>
+  <p class="mt-1 text-slate-500">A snapshot of your portfolio's value, performance and allocation.</p>
 </div>
 
 <!-- Summary cards -->
-<section class="cards">
-  <div class="card stat">
-    <span class="stat__label">Total value</span>
-    <strong class="stat__value">{{ summary().totalValue | currency }}</strong>
-    <span class="stat__sub">Cost basis {{ summary().totalCost | currency }}</span>
+<section class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+  <div class="card flex flex-col gap-1">
+    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total value</span>
+    <strong class="text-3xl tabular-nums">{{ summary().totalValue | currency }}</strong>
+    <span class="text-sm text-slate-500">Cost basis {{ summary().totalCost | currency }}</span>
   </div>
 
-  <div class="card stat">
-    <span class="stat__label">Total gain / loss</span>
-    <strong class="stat__value" [class.pos]="summary().totalGainLoss >= 0" [class.neg]="summary().totalGainLoss < 0">
+  <div class="card flex flex-col gap-1">
+    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total gain / loss</span>
+    <strong class="text-3xl" [class.pos]="summary().totalGainLoss >= 0" [class.neg]="summary().totalGainLoss < 0">
       {{ summary().totalGainLoss | currency }}
     </strong>
-    <span class="stat__sub" [class.pos]="summary().totalGainLoss >= 0" [class.neg]="summary().totalGainLoss < 0">
+    <span class="text-sm" [class.pos]="summary().totalGainLoss >= 0" [class.neg]="summary().totalGainLoss < 0">
       {{ summary().totalGainLossPct | percent: '1.2-2' }}
     </span>
   </div>
 
-  <div class="card stat">
-    <span class="stat__label">Holdings</span>
-    <strong class="stat__value">{{ summary().holdingsCount }}</strong>
-    <span class="stat__sub">Across {{ allocation().length }} asset classes</span>
+  <div class="card flex flex-col gap-1">
+    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Holdings</span>
+    <strong class="text-3xl tabular-nums">{{ summary().holdingsCount }}</strong>
+    <span class="text-sm text-slate-500">Across {{ allocation().length }} asset classes</span>
   </div>
 </section>
 
-<section class="grid">
+<section class="grid grid-cols-1 gap-4 lg:grid-cols-2">
   <!-- Allocation -->
   <div class="card">
-    <h3 class="card__title">Asset allocation</h3>
+    <h3 class="card-title">Asset allocation</h3>
 
-    <div class="alloc-bar" role="img" aria-label="Portfolio allocation by asset class">
+    <div class="mb-4 flex h-3.5 overflow-hidden rounded-full" role="img" aria-label="Portfolio allocation by asset class">
       @for (slice of allocation(); track slice.assetClass) {
         <span
-          class="alloc-bar__seg"
+          class="border-l-2 border-white first:border-l-0"
           [style.width.%]="slice.weight * 100"
           [style.background]="colorFor(slice.assetClass)"
           [title]="slice.assetClass + ': ' + (slice.weight | percent)"
@@ -44,13 +44,13 @@
       }
     </div>
 
-    <ul class="legend">
+    <ul class="flex flex-col gap-2.5">
       @for (slice of allocation(); track slice.assetClass) {
-        <li>
-          <span class="legend__dot" [style.background]="colorFor(slice.assetClass)"></span>
-          <span class="legend__name">{{ slice.assetClass }}</span>
-          <span class="legend__pct">{{ slice.weight | percent: '1.1-1' }}</span>
-          <span class="legend__val">{{ slice.value | currency }}</span>
+        <li class="grid grid-cols-[14px_1fr_auto_auto] items-center gap-2.5 text-sm">
+          <span class="h-3 w-3 rounded-sm" [style.background]="colorFor(slice.assetClass)"></span>
+          <span class="font-semibold">{{ slice.assetClass }}</span>
+          <span class="tabular-nums text-slate-500">{{ slice.weight | percent: '1.1-1' }}</span>
+          <span class="min-w-[90px] text-right tabular-nums">{{ slice.value | currency }}</span>
         </li>
       }
     </ul>
@@ -58,33 +58,33 @@
 
   <!-- Top holdings -->
   <div class="card">
-    <h3 class="card__title">Top holdings</h3>
-    <div class="table-scroll">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Symbol</th>
-          <th class="num">Value</th>
-          <th class="num">Gain / loss</th>
-          <th class="num">Weight</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (h of topHoldings(); track h.id) {
+    <h3 class="card-title">Top holdings</h3>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
           <tr>
-            <td>
-              <strong>{{ h.symbol }}</strong>
-              <div class="muted">{{ h.name }}</div>
-            </td>
-            <td class="num">{{ h.marketValue | currency }}</td>
-            <td class="num" [class.pos]="h.gainLoss >= 0" [class.neg]="h.gainLoss < 0">
-              {{ h.gainLossPct | percent: '1.1-1' }}
-            </td>
-            <td class="num">{{ h.weight | percent: '1.1-1' }}</td>
+            <th>Symbol</th>
+            <th class="num">Value</th>
+            <th class="num">Gain / loss</th>
+            <th class="num">Weight</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (h of topHoldings(); track h.id) {
+            <tr>
+              <td>
+                <strong>{{ h.symbol }}</strong>
+                <div class="text-xs text-slate-500">{{ h.name }}</div>
+              </td>
+              <td class="num">{{ h.marketValue | currency }}</td>
+              <td class="num" [class.pos]="h.gainLoss >= 0" [class.neg]="h.gainLoss < 0">
+                {{ h.gainLossPct | percent: '1.1-1' }}
+              </td>
+              <td class="num">{{ h.weight | percent: '1.1-1' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   </div>
 </section>

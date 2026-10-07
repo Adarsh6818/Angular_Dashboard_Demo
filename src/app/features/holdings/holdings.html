@@ -1,107 +1,119 @@
-<div class="page-head head-row">
+<div class="mb-5 flex items-start justify-between gap-4">
   <div>
-    <h2>Holdings</h2>
-    <p>Every position with live market value and unrealised gain / loss.</p>
+    <h2 class="text-2xl">Holdings</h2>
+    <p class="mt-1 text-slate-500">Every position with live market value and unrealised gain / loss.</p>
   </div>
-  <button type="button" class="btn btn--primary" (click)="toggleForm()">
-    {{ showForm() ? 'Close' : '+ Add holding' }}
-  </button>
+  @if (!showForm()) {
+    <button type="button" class="btn btn-primary" (click)="startAdd()">+ Add holding</button>
+  }
 </div>
 
-<!-- Reactive form -->
+<!-- Create / edit reactive form -->
 @if (showForm()) {
-  <form class="card add-form" [formGroup]="form" (ngSubmit)="submit()">
-    <div class="field">
-      <label for="symbol">Symbol</label>
-      <input id="symbol" formControlName="symbol" placeholder="AAPL" autocomplete="off" />
+  <form class="card mb-4 grid grid-cols-2 items-end gap-x-4 gap-y-3.5 md:grid-cols-6" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="col-span-2 md:col-span-6">
+      <h3 class="card-title mb-0">{{ editingId() ? 'Edit holding' : 'Add holding' }}</h3>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="field-label" for="symbol">Symbol</label>
+      <input id="symbol" class="input" formControlName="symbol" placeholder="AAPL" autocomplete="off" />
       @if (invalid('symbol')) {
         <small class="err">1–6 letters, e.g. AAPL</small>
       }
     </div>
 
-    <div class="field field--wide">
-      <label for="name">Name</label>
-      <input id="name" formControlName="name" placeholder="Apple Inc." autocomplete="off" />
+    <div class="col-span-2 flex flex-col gap-1">
+      <label class="field-label" for="name">Name</label>
+      <input id="name" class="input" formControlName="name" placeholder="Apple Inc." autocomplete="off" />
       @if (invalid('name')) {
         <small class="err">Enter a name (min 2 characters)</small>
       }
     </div>
 
-    <div class="field">
-      <label for="assetClass">Asset class</label>
-      <select id="assetClass" formControlName="assetClass">
+    <div class="flex flex-col gap-1">
+      <label class="field-label" for="assetClass">Asset class</label>
+      <select id="assetClass" class="input" formControlName="assetClass">
         @for (ac of assetClasses; track ac) {
           <option [value]="ac">{{ ac }}</option>
         }
       </select>
     </div>
 
-    <div class="field">
-      <label for="quantity">Quantity</label>
-      <input id="quantity" type="number" step="any" formControlName="quantity" />
+    <div class="flex flex-col gap-1">
+      <label class="field-label" for="quantity">Quantity</label>
+      <input id="quantity" class="input" type="number" step="any" formControlName="quantity" />
       @if (invalid('quantity')) {
         <small class="err">Must be greater than 0</small>
       }
     </div>
 
-    <div class="field">
-      <label for="price">Price</label>
-      <input id="price" type="number" step="any" formControlName="price" />
+    <div class="flex flex-col gap-1">
+      <label class="field-label" for="price">Price</label>
+      <input id="price" class="input" type="number" step="any" formControlName="price" />
       @if (invalid('price')) {
         <small class="err">Must be greater than 0</small>
       }
     </div>
 
-    <div class="field field--action">
-      <button type="submit" class="btn btn--primary" [disabled]="form.invalid">Add</button>
+    <div class="col-span-2 flex gap-2 md:col-span-6">
+      <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+        {{ editingId() ? 'Save changes' : 'Add' }}
+      </button>
+      <button type="button" class="btn" (click)="cancel()">Cancel</button>
     </div>
   </form>
 }
 
 <!-- Holdings table -->
 <div class="card">
-  <div class="table-scroll">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Symbol</th>
-        <th>Class</th>
-        <th class="num">Qty</th>
-        <th class="num">Avg cost</th>
-        <th class="num">Price</th>
-        <th class="num">Market value</th>
-        <th class="num">Gain / loss</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (h of holdings(); track h.id) {
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead>
         <tr>
-          <td>
-            <strong>{{ h.symbol }}</strong>
-            <div class="muted">{{ h.name }}</div>
-          </td>
-          <td><span class="badge">{{ h.assetClass }}</span></td>
-          <td class="num">{{ h.quantity | number: '1.0-4' }}</td>
-          <td class="num">{{ h.avgCost | currency }}</td>
-          <td class="num">{{ h.currentPrice | currency }}</td>
-          <td class="num">{{ h.marketValue | currency }}</td>
-          <td class="num" [class.pos]="h.gainLoss >= 0" [class.neg]="h.gainLoss < 0">
-            {{ h.gainLoss | currency }}
-            <div class="muted-pct">{{ h.gainLossPct | percent: '1.1-1' }}</div>
-          </td>
-          <td class="num">
-            @if (h.assetClass !== 'Cash') {
-              <button type="button" class="btn btn--ghost" (click)="sell(h.id)">Sell</button>
-            }
-          </td>
+          <th>Symbol</th>
+          <th>Class</th>
+          <th class="num">Qty</th>
+          <th class="num">Avg cost</th>
+          <th class="num">Price</th>
+          <th class="num">Market value</th>
+          <th class="num">Gain / loss</th>
+          <th class="num">Actions</th>
         </tr>
-      } @empty {
-        <tr>
-          <td colspan="8" class="empty">No holdings yet — add your first position.</td>
-        </tr>
-      }
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        @for (h of holdings(); track h.id) {
+          <tr>
+            <td>
+              <strong>{{ h.symbol }}</strong>
+              <div class="text-xs text-slate-500">{{ h.name }}</div>
+            </td>
+            <td><span class="badge">{{ h.assetClass }}</span></td>
+            <td class="num">{{ h.quantity | number: '1.0-4' }}</td>
+            <td class="num">{{ h.avgCost | currency }}</td>
+            <td class="num">{{ h.currentPrice | currency }}</td>
+            <td class="num">{{ h.marketValue | currency }}</td>
+            <td class="num" [class.pos]="h.gainLoss >= 0" [class.neg]="h.gainLoss < 0">
+              {{ h.gainLoss | currency }}
+              <div class="text-xs opacity-80">{{ h.gainLossPct | percent: '1.1-1' }}</div>
+            </td>
+            <td class="num">
+              <div class="flex justify-end gap-1.5">
+                <button type="button" class="btn btn-ghost" (click)="startEdit(h)">Edit</button>
+                @if (h.assetClass !== 'Cash') {
+                  <button type="button" class="btn btn-ghost btn-danger" (click)="sell(h)">Sell</button>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="py-8 text-center text-slate-500">
+              No holdings yet — add your first position.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </div>
 </div>

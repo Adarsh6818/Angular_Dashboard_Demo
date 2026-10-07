@@ -1,0 +1,131 @@
+<div class="mb-5">
+  <h2 class="text-2xl">Profile</h2>
+  <p class="mt-1 text-slate-500">View and manage your personal details and contact information.</p>
+</div>
+
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+  <!-- Profile details: read / update -->
+  <div class="card">
+    <div class="mb-3 flex items-center justify-between">
+      <h3 class="card-title mb-0">Personal details</h3>
+      @if (!editingDetails()) {
+        <button type="button" class="btn btn-ghost" (click)="editDetails()">Edit</button>
+      }
+    </div>
+
+    @if (!editingDetails()) {
+      <!-- Read mode -->
+      <dl class="flex flex-col gap-3">
+        <div class="flex items-center gap-3">
+          <span class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-base font-bold text-white">
+            {{ profile().fullName.charAt(0) }}
+          </span>
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Full name</dt>
+            <dd class="text-lg font-semibold">{{ profile().fullName }}</dd>
+          </div>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Address</dt>
+          <dd class="text-slate-800">
+            {{ profile().addressLine1 }}<br />
+            {{ profile().city }}, {{ profile().country }}
+          </dd>
+        </div>
+      </dl>
+    } @else {
+      <!-- Edit mode -->
+      <form class="flex flex-col gap-3" [formGroup]="detailsForm" (ngSubmit)="saveDetails()">
+        <div class="flex flex-col gap-1">
+          <label class="field-label" for="fullName">Full name</label>
+          <input id="fullName" class="input" formControlName="fullName" autocomplete="off" />
+          @if (detailsInvalid('fullName')) {
+            <small class="err">Enter your name (min 2 characters)</small>
+          }
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="field-label" for="addressLine1">Address</label>
+          <input id="addressLine1" class="input" formControlName="addressLine1" autocomplete="off" />
+          @if (detailsInvalid('addressLine1')) {
+            <small class="err">Address is required</small>
+          }
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col gap-1">
+            <label class="field-label" for="city">City</label>
+            <input id="city" class="input" formControlName="city" autocomplete="off" />
+            @if (detailsInvalid('city')) {
+              <small class="err">City is required</small>
+            }
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="field-label" for="country">Country</label>
+            <input id="country" class="input" formControlName="country" autocomplete="off" />
+            @if (detailsInvalid('country')) {
+              <small class="err">Country is required</small>
+            }
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="btn btn-primary" [disabled]="detailsForm.invalid">Save changes</button>
+          <button type="button" class="btn" (click)="editingDetails.set(false)">Cancel</button>
+        </div>
+      </form>
+    }
+  </div>
+
+  <!-- Contacts: full CRUD -->
+  <div class="card">
+    <div class="mb-3 flex items-center justify-between">
+      <h3 class="card-title mb-0">Contacts</h3>
+      @if (!showContactForm()) {
+        <button type="button" class="btn btn-ghost" (click)="startAddContact()">+ Add contact</button>
+      }
+    </div>
+
+    @if (showContactForm()) {
+      <form class="mb-4 flex flex-col gap-3 rounded-lg bg-slate-50 p-3" [formGroup]="contactForm" (ngSubmit)="saveContact()">
+        <div class="grid grid-cols-[120px_1fr] gap-3">
+          <div class="flex flex-col gap-1">
+            <label class="field-label" for="type">Type</label>
+            <select id="type" class="input" formControlName="type">
+              @for (ct of contactTypes; track ct) {
+                <option [value]="ct">{{ ct }}</option>
+              }
+            </select>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="field-label" for="value">Value</label>
+            <input id="value" class="input" formControlName="value" placeholder="name@example.com" autocomplete="off" />
+            @if (contactInvalid('value')) {
+              <small class="err">Enter a value (min 3 characters)</small>
+            }
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="btn btn-primary" [disabled]="contactForm.invalid">
+            {{ editingContactId() ? 'Save' : 'Add' }}
+          </button>
+          <button type="button" class="btn" (click)="cancelContact()">Cancel</button>
+        </div>
+      </form>
+    }
+
+    <ul class="flex flex-col divide-y divide-slate-200">
+      @for (c of contacts(); track c.id) {
+        <li class="flex items-center justify-between gap-3 py-2.5">
+          <div class="flex items-center gap-2.5">
+            <span class="badge">{{ c.type }}</span>
+            <span>{{ c.value }}</span>
+          </div>
+          <div class="flex gap-1.5">
+            <button type="button" class="btn btn-ghost" (click)="startEditContact(c)">Edit</button>
+            <button type="button" class="btn btn-ghost btn-danger" (click)="deleteContact(c.id)">Delete</button>
+          </div>
+        </li>
+      } @empty {
+        <li class="py-6 text-center text-slate-500">No contacts yet — add one above.</li>
+      }
+    </ul>
+  </div>
+</div>

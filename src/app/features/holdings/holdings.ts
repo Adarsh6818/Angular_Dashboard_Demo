@@ -1,18 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { CurrencyPipe, DecimalPipe, PercentPipe } from '@angular/common';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PortfolioService } from '../../services/portfolio.service';
-import { AssetClass } from '../../models/portfolio.models';
+import { AssetClass, HoldingView } from '../../models/portfolio.models';
 
+// Holdings view: lists every position and provides full CRUD (add, edit, sell) via a reactive form.
 @Component({
   selector: 'app-holdings',
   imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, PercentPipe],
   templateUrl: './holdings.html',
-  styleUrl: './holdings.scss',
 })
 export class Holdings {
   private readonly portfolio = inject(PortfolioService);
@@ -23,8 +19,10 @@ export class Holdings {
   protected readonly assetClasses: AssetClass[] = ['Equity', 'ETF', 'Bond', 'Cash', 'Crypto'];
 
   protected readonly showForm = signal(false);
+  /** Id of the holding being edited, or null when adding a new one. */
+  protected readonly editingId = signal<string | null>(null);
 
-  /** Typed, validated reactive form for adding / topping up a position. */
+  /** Typed, validated reactive form used for both creating and editing a position. */
   protected readonly form = this.fb.nonNullable.group({
     symbol: ['', [Validators.required, Validators.pattern(/^[A-Za-z.]{1,6}$/)]],
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -33,29 +31,53 @@ export class Holdings {
     price: [0, [Validators.required, Validators.min(0.01)]],
   });
 
-  protected toggleForm(): void {
-    this.showForm.update((v) => !v);
-    if (!this.showForm()) this.form.reset({ assetClass: 'Equity', quantity: 0, price: 0 });
+  /** Open an empty form in "add" mode. */
+  protected startAdd(): void {
+    this.editingId.set(null);
+    this.form.reset({ assetClass: 'Equity', quantity: 0, price: 0 });
+    this.showForm.set(true);
   }
 
+  /** Open the form pre-filled in "edit" mode for the given holding. */
+  protected startEdit(h: HoldingView): void {
+    this.editingId.set(h.id);
+    this.form.setValue({
+      symbol: h.symbol,
+      name: h.name,
+      assetClass: h.assetClass,
+      quantity: h.quantity,
+      price: h.currentPrice,
+    });
+    this.showForm.set(true);
+  }
+
+  protected cancel(): void {
+    this.showForm.set(false);
+    this.editingId.set(null);
+  }
+
+  /** Create a new holding or update the one being edited. */
   protected submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
     const value = this.form.getRawValue();
-    this.portfolio.addHolding(value);
-    this.form.reset({ assetClass: 'Equity', quantity: 0, price: 0 });
-    this.showForm.set(false);
+    const id = this.editingId();
+    if (id) {
+      this.portfolio.updateHolding(id, value);
+    } else {
+      this.portfolio.addHolding(value);
+    }
+    this.cancel();
   }
 
-  protected sell(id: string): void {
-    const holding = this.holdings().find((h) => h.id === id);
-    if (!holding) return;
-    const input = prompt(`Sell how many units of ${holding.symbol}? (max ${holding.quantity})`);
+  /** Sell (delete) a position, prompting for the quantity. */
+  protected sell(h: HoldingView): void {
+    const input = prompt(`Sell how many units of ${h.symbol}? (max ${h.quantity})`);
     const qty = Number(input);
     if (Number.isFinite(qty) && qty > 0) {
-      this.portfolio.sellHolding(id, qty);
+      this.portfolio.sellHolding(h.id, qty);
     }
   }
 

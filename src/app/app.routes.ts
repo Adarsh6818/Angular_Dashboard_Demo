@@ -22,5 +22,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/transactions/transactions').then((m) => m.Transactions),
   },
+  {
+    path: 'profile',
+    title: 'Profile · Portfolio',
+    loadComponent: () => import('./features/profile/profile').then((m) => m.Profile),
+  },
   { path: '**', redirectTo: '' },
 ];
