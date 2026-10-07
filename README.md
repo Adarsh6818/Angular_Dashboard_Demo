@@ -28,22 +28,17 @@ a typed HTTP layer, and unit-tested business logic).
 ### Dashboard
 Portfolio value, gain/loss, asset allocation and top holdings.
 
-![Dashboard](screenshots/dashboard.png)
+![Dashboard](screenshots/Dashboard.png)
 
 ### Holdings
 Every position with live market value and gain/loss, plus add / edit / sell actions.
 
-![Holdings](screenshots/holdings.png)
-
-### Transactions
-Buy / sell / dividend history with a filter by type.
-
-![Transactions](screenshots/transactions.png)
+![Holdings](screenshots/Holdings_Page.png)
 
 ### Profile
 Personal details and full CRUD on contacts.
 
-![Profile](screenshots/profile.png)
+![Profile](screenshots/Profile_Page.png)
 
 ## Features
 

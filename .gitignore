@@ -42,3 +42,6 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Large source screenshots (TIFF) - keep PNGs in the repo instead
+screenshots/*.tiff
