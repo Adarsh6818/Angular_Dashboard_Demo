@@ -1,0 +1,36 @@
+<header class="app-bar">
+  <div class="app-bar__brand">
+    <span class="app-bar__mark" aria-hidden="true">◆</span>
+    <div>
+      <h1>Portfolio<span>Pro</span></h1>
+      <p>Investment dashboard</p>
+    </div>
+  </div>
+
+  <div class="app-bar__value">
+    <span class="app-bar__value-label">Total value</span>
+    <strong>{{ summary().totalValue | currency }}</strong>
+  </div>
+
+  <button
+    type="button"
+    class="feed-toggle"
+    [class.feed-toggle--on]="isLive()"
+    (click)="toggleLive()"
+  >
+    <span class="feed-toggle__dot" aria-hidden="true"></span>
+    {{ isLive() ? 'Live feed on' : 'Start live feed' }}
+  </button>
+</header>
+
+<nav class="app-nav" aria-label="Primary">
+  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+    Dashboard
+  </a>
+  <a routerLink="/holdings" routerLinkActive="active">Holdings</a>
+  <a routerLink="/transactions" routerLinkActive="active">Transactions</a>
+</nav>
+
+<main class="app-main">
+  <router-outlet />
+</main>

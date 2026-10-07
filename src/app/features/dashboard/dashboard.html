@@ -1,0 +1,90 @@
+<div class="page-head">
+  <h2>Dashboard</h2>
+  <p>A snapshot of your portfolio's value, performance and allocation.</p>
+</div>
+
+<!-- Summary cards -->
+<section class="cards">
+  <div class="card stat">
+    <span class="stat__label">Total value</span>
+    <strong class="stat__value">{{ summary().totalValue | currency }}</strong>
+    <span class="stat__sub">Cost basis {{ summary().totalCost | currency }}</span>
+  </div>
+
+  <div class="card stat">
+    <span class="stat__label">Total gain / loss</span>
+    <strong class="stat__value" [class.pos]="summary().totalGainLoss >= 0" [class.neg]="summary().totalGainLoss < 0">
+      {{ summary().totalGainLoss | currency }}
+    </strong>
+    <span class="stat__sub" [class.pos]="summary().totalGainLoss >= 0" [class.neg]="summary().totalGainLoss < 0">
+      {{ summary().totalGainLossPct | percent: '1.2-2' }}
+    </span>
+  </div>
+
+  <div class="card stat">
+    <span class="stat__label">Holdings</span>
+    <strong class="stat__value">{{ summary().holdingsCount }}</strong>
+    <span class="stat__sub">Across {{ allocation().length }} asset classes</span>
+  </div>
+</section>
+
+<section class="grid">
+  <!-- Allocation -->
+  <div class="card">
+    <h3 class="card__title">Asset allocation</h3>
+
+    <div class="alloc-bar" role="img" aria-label="Portfolio allocation by asset class">
+      @for (slice of allocation(); track slice.assetClass) {
+        <span
+          class="alloc-bar__seg"
+          [style.width.%]="slice.weight * 100"
+          [style.background]="colorFor(slice.assetClass)"
+          [title]="slice.assetClass + ': ' + (slice.weight | percent)"
+        ></span>
+      }
+    </div>
+
+    <ul class="legend">
+      @for (slice of allocation(); track slice.assetClass) {
+        <li>
+          <span class="legend__dot" [style.background]="colorFor(slice.assetClass)"></span>
+          <span class="legend__name">{{ slice.assetClass }}</span>
+          <span class="legend__pct">{{ slice.weight | percent: '1.1-1' }}</span>
+          <span class="legend__val">{{ slice.value | currency }}</span>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <!-- Top holdings -->
+  <div class="card">
+    <h3 class="card__title">Top holdings</h3>
+    <div class="table-scroll">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th class="num">Value</th>
+          <th class="num">Gain / loss</th>
+          <th class="num">Weight</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (h of topHoldings(); track h.id) {
+          <tr>
+            <td>
+              <strong>{{ h.symbol }}</strong>
+              <div class="muted">{{ h.name }}</div>
+            </td>
+            <td class="num">{{ h.marketValue | currency }}</td>
+            <td class="num" [class.pos]="h.gainLoss >= 0" [class.neg]="h.gainLoss < 0">
+              {{ h.gainLossPct | percent: '1.1-1' }}
+            </td>
+            <td class="num">{{ h.weight | percent: '1.1-1' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
