@@ -23,6 +23,8 @@ export class Profile {
   /** Id of the contact being edited, or null when adding a new one. */
   protected readonly editingContactId = signal<string | null>(null);
   protected readonly showContactForm = signal(false);
+  /** Id of the contact awaiting delete confirmation, or null. */
+  protected readonly pendingDeleteId = signal<string | null>(null);
 
   /** Reactive form for the core profile details (name + address). */
   protected readonly detailsForm = this.fb.nonNullable.group({
@@ -99,13 +101,22 @@ export class Profile {
     this.editingContactId.set(null);
   }
 
-  protected async deleteContact(id: string): Promise<void> {
-    if (confirm('Delete this contact?')) {
-      try {
-        await this.profileService.removeContact(id);
-      } catch {
-        this.error.set('Could not delete the contact. Please try again.');
-      }
+  /** Ask for inline confirmation before deleting a contact. */
+  protected askDelete(id: string): void {
+    this.pendingDeleteId.set(id);
+  }
+
+  protected cancelDelete(): void {
+    this.pendingDeleteId.set(null);
+  }
+
+  /** DELETE: remove the contact once the inline confirmation is accepted. */
+  protected async confirmDelete(id: string): Promise<void> {
+    try {
+      await this.profileService.removeContact(id);
+      this.pendingDeleteId.set(null);
+    } catch {
+      this.error.set('Could not delete the contact. Please try again.');
     }
   }
 

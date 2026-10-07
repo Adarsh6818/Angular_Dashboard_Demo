@@ -127,10 +127,18 @@
             <span class="badge">{{ c.type }}</span>
             <span>{{ c.value }}</span>
           </div>
-          <div class="flex gap-1.5">
-            <button type="button" class="btn btn-ghost" (click)="startEditContact(c)">Edit</button>
-            <button type="button" class="btn btn-ghost btn-danger" (click)="deleteContact(c.id)">Delete</button>
-          </div>
+          @if (pendingDeleteId() === c.id) {
+            <div class="flex items-center gap-1.5">
+              <span class="text-sm text-slate-500">Delete?</span>
+              <button type="button" class="btn btn-ghost btn-danger" (click)="confirmDelete(c.id)">Yes</button>
+              <button type="button" class="btn btn-ghost" (click)="cancelDelete()">No</button>
+            </div>
+          } @else {
+            <div class="flex gap-1.5">
+              <button type="button" class="btn btn-ghost" (click)="startEditContact(c)">Edit</button>
+              <button type="button" class="btn btn-ghost btn-danger" (click)="askDelete(c.id)">Delete</button>
+            </div>
+          }
         </li>
       } @empty {
         <li class="py-6 text-center text-slate-500">No contacts yet — add one above.</li>
