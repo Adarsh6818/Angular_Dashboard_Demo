@@ -8,6 +8,12 @@
   }
 </div>
 
+@if (error()) {
+  <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+    {{ error() }}
+  </div>
+}
+
 <!-- Create / edit reactive form -->
 @if (showForm()) {
   <form class="card mb-4 grid grid-cols-2 items-end gap-x-4 gap-y-3.5 md:grid-cols-6" [formGroup]="form" (ngSubmit)="submit()">
@@ -66,6 +72,9 @@
 }
 
 <!-- Holdings table -->
+@if (!ready()) {
+  <div class="card text-center text-slate-500">Loading holdings…</div>
+} @else {
 <div class="card">
   <div class="overflow-x-auto">
     <table class="data-table">
@@ -117,3 +126,4 @@
     </table>
   </div>
 </div>
+}

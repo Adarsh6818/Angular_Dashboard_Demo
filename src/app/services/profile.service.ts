@@ -1,64 +1,73 @@
 import { computed, Injectable, signal } from '@angular/core';
-import { Contact, ContactType, Profile, ProfileDetailsInput } from '../models/profile.models';
+import { api } from '../core/api';
+import { ContactType, Profile, ProfileDetailsInput } from '../models/profile.models';
+import { computeInitials } from './profile.logic';
 
-// Holds the investor profile as a signal and exposes CRUD operations over it.
+const EMPTY_PROFILE: Profile = {
+  fullName: '',
+  addressLine1: '',
+  city: '',
+  country: '',
+  contacts: [],
+};
+
+/** Guard against a malformed response (e.g. an HTML fallback) being stored as the profile. */
+function isProfile(data: unknown): data is Profile {
+  return (
+    !!data &&
+    typeof data === 'object' &&
+    typeof (data as Profile).fullName === 'string' &&
+    Array.isArray((data as Profile).contacts)
+  );
+}
+
+// Profile state: fetches the profile from the REST API via Axios and exposes CRUD operations.
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
-  private readonly profileState = signal<Profile>(SEED_PROFILE);
+  private readonly profileState = signal<Profile>(EMPTY_PROFILE);
 
-  /** READ: the current profile (read-only to consumers). */
+  /** True once the first load has finished. */
+  readonly ready = signal(false);
+  readonly error = signal<string | null>(null);
+
   readonly profile = this.profileState.asReadonly();
-
-  /** READ: the profile's contact entries. */
   readonly contacts = computed(() => this.profileState().contacts);
+  readonly initials = computed(() => computeInitials(this.profileState().fullName));
 
-  /** Initials derived from the full name, for the avatar. */
-  readonly initials = computed(() => {
-    const parts = this.profileState().fullName.trim().split(/\s+/);
-    return (parts[0]?.[0] ?? '') + (parts.at(-1)?.[0] ?? '');
-  });
+  /** READ: load the profile from the API. */
+  async load(): Promise<void> {
+    try {
+      const { data } = await api.get<Profile>('/profile');
+      this.profileState.set(isProfile(data) ? data : EMPTY_PROFILE);
+      this.error.set(null);
+    } catch {
+      this.error.set('Could not load profile. Is the API server running?');
+    } finally {
+      this.ready.set(true);
+    }
+  }
 
   /** UPDATE: replace the core profile details (name + address). */
-  updateDetails(input: ProfileDetailsInput): void {
-    this.profileState.update((p) => ({
-      ...p,
-      fullName: input.fullName.trim(),
-      addressLine1: input.addressLine1.trim(),
-      city: input.city.trim(),
-      country: input.country.trim(),
-    }));
+  async updateDetails(input: ProfileDetailsInput): Promise<void> {
+    const { data } = await api.put<Profile>('/profile/details', input);
+    this.profileState.set(data);
   }
 
   /** CREATE: add a new contact entry. */
-  addContact(type: ContactType, value: string): void {
-    const contact: Contact = { id: crypto.randomUUID(), type, value: value.trim() };
-    this.profileState.update((p) => ({ ...p, contacts: [...p.contacts, contact] }));
+  async addContact(type: ContactType, value: string): Promise<void> {
+    const { data } = await api.post<Profile>('/profile/contacts', { type, value });
+    this.profileState.set(data);
   }
 
   /** UPDATE: edit an existing contact entry. */
-  updateContact(id: string, type: ContactType, value: string): void {
-    this.profileState.update((p) => ({
-      ...p,
-      contacts: p.contacts.map((c) => (c.id === id ? { ...c, type, value: value.trim() } : c)),
-    }));
+  async updateContact(id: string, type: ContactType, value: string): Promise<void> {
+    const { data } = await api.put<Profile>(`/profile/contacts/${id}`, { type, value });
+    this.profileState.set(data);
   }
 
   /** DELETE: remove a contact entry. */
-  removeContact(id: string): void {
-    this.profileState.update((p) => ({
-      ...p,
-      contacts: p.contacts.filter((c) => c.id !== id),
-    }));
+  async removeContact(id: string): Promise<void> {
+    const { data } = await api.delete<Profile>(`/profile/contacts/${id}`);
+    this.profileState.set(data);
   }
 }
-
-const SEED_PROFILE: Profile = {
-  fullName: 'Alex Morgan',
-  addressLine1: '12 Eyre Square',
-  city: 'Galway',
-  country: 'Ireland',
-  contacts: [
-    { id: 'c1', type: 'Email', value: 'alex.morgan@example.com' },
-    { id: 'c2', type: 'Phone', value: '+353 91 000 000' },
-  ],
-};

@@ -1,0 +1,17 @@
+{
+  "holdings": [
+    { "id": "1", "symbol": "AAPL", "name": "Apple Inc.", "assetClass": "Equity", "quantity": 40, "avgCost": 165.2, "currentPrice": 227.5 },
+    { "id": "2", "symbol": "MSFT", "name": "Microsoft Corp.", "assetClass": "Equity", "quantity": 25, "avgCost": 310.0, "currentPrice": 421.9 },
+    { "id": "3", "symbol": "FXAIX", "name": "Fidelity 500 Index Fund", "assetClass": "ETF", "quantity": 120, "avgCost": 150.4, "currentPrice": 189.75 },
+    { "id": "4", "symbol": "VTI", "name": "Vanguard Total Stock Market ETF", "assetClass": "ETF", "quantity": 60, "avgCost": 210.0, "currentPrice": 268.3 },
+    { "id": "5", "symbol": "BND", "name": "Vanguard Total Bond Market ETF", "assetClass": "Bond", "quantity": 80, "avgCost": 74.5, "currentPrice": 72.1 },
+    { "id": "6", "symbol": "NVDA", "name": "NVIDIA Corp.", "assetClass": "Equity", "quantity": 15, "avgCost": 95.0, "currentPrice": 138.6 },
+    { "id": "7", "symbol": "CASH", "name": "Cash & Money Market", "assetClass": "Cash", "quantity": 1, "avgCost": 8500, "currentPrice": 8500 }
+  ],
+  "transactions": [
+    { "id": "t1", "date": "2026-09-02T14:31:00Z", "type": "BUY", "symbol": "NVDA", "quantity": 15, "price": 95.0 },
+    { "id": "t2", "date": "2026-09-15T13:05:00Z", "type": "BUY", "symbol": "AAPL", "quantity": 10, "price": 171.4 },
+    { "id": "t3", "date": "2026-09-28T09:45:00Z", "type": "DIVIDEND", "symbol": "FXAIX", "quantity": 120, "price": 0.42 },
+    { "id": "t4", "date": "2026-10-01T15:12:00Z", "type": "SELL", "symbol": "MSFT", "quantity": 5, "price": 415.0 }
+  ]
+}

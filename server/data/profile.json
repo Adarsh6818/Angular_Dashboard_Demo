@@ -1,0 +1,10 @@
+{
+  "fullName": "Alex Morgan",
+  "addressLine1": "12 Eyre Square",
+  "city": "Galway",
+  "country": "Ireland",
+  "contacts": [
+    { "id": "c1", "type": "Email", "value": "alex.morgan@example.com" },
+    { "id": "c2", "type": "Phone", "value": "+353 91 000 000" }
+  ]
+}

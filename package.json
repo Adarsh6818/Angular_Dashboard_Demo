@@ -4,6 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "api": "node server/index.js",
+    "dev": "concurrently -n api,web -c green,cyan \"npm:api\" \"npm:start\"",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
@@ -17,6 +19,9 @@
     "@angular/forms": "^22.2.0",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "axios": "^1.20.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -25,7 +30,9 @@
     "@angular/cli": "^22.2.2",
     "@angular/compiler-cli": "^22.2.0",
     "@tailwindcss/postcss": "^4.3.3",
+    "concurrently": "^10.0.5",
     "jsdom": "^30.0.0",
+    "json-server": "^1.0.0-beta.15",
     "postcss": "^8.5.29",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.3.3",

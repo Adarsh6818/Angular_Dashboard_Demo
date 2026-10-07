@@ -14,6 +14,8 @@ export class Dashboard {
 
   protected readonly summary = this.portfolio.summary;
   protected readonly allocation = this.portfolio.allocation;
+  protected readonly ready = this.portfolio.ready;
+  protected readonly error = this.portfolio.error;
 
   /** Five largest positions by market value. */
   protected readonly topHoldings = computed(() => this.portfolio.holdingViews().slice(0, 5));

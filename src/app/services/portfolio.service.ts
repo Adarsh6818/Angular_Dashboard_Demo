@@ -1,183 +1,70 @@
 import { computed, Injectable, signal } from '@angular/core';
-import {
-  AllocationSlice,
-  AssetClass,
-  Holding,
-  HoldingView,
-  NewHoldingInput,
-  PortfolioSummary,
-  Transaction,
-} from '../models/portfolio.models';
+import { api } from '../core/api';
+import { Holding, NewHoldingInput, Transaction } from '../models/portfolio.models';
+import { buildAllocation, buildHoldingViews, buildSummary } from './portfolio.logic';
 
-// Single source of truth for portfolio state, exposed as signals + computed values.
-@Injectable({ providedIn: 'root' })
-export class PortfolioService {
-  private readonly holdingsState = signal<Holding[]>(SEED_HOLDINGS);
-  private readonly transactionsState = signal<Transaction[]>(SEED_TRANSACTIONS);
-
-  /** Raw holdings (read-only to consumers). */
-  readonly holdings = this.holdingsState.asReadonly();
-
-  /** Activity history, newest first. */
-  readonly transactions = computed(() =>
-    [...this.transactionsState()].sort((a, b) => b.date.localeCompare(a.date)),
-  );
-
-  /** Holdings enriched with market value / gain-loss / weight, richest first. */
-  readonly holdingViews = computed<HoldingView[]>(() => {
-    const total = this.totalMarketValue();
-    return this.holdingsState()
-      .map((h) => {
-        const marketValue = h.quantity * h.currentPrice;
-        const costBasis = h.quantity * h.avgCost;
-        const gainLoss = marketValue - costBasis;
-        return {
-          ...h,
-          marketValue,
-          costBasis,
-          gainLoss,
-          gainLossPct: costBasis === 0 ? 0 : gainLoss / costBasis,
-          weight: total === 0 ? 0 : marketValue / total,
-        };
-      })
-      .sort((a, b) => b.marketValue - a.marketValue);
-  });
-
-  /** Headline numbers for the summary cards. */
-  readonly summary = computed<PortfolioSummary>(() => {
-    const views = this.holdingViews();
-    const totalValue = views.reduce((sum, h) => sum + h.marketValue, 0);
-    const totalCost = views.reduce((sum, h) => sum + h.costBasis, 0);
-    const totalGainLoss = totalValue - totalCost;
-    return {
-      totalValue,
-      totalCost,
-      totalGainLoss,
-      totalGainLossPct: totalCost === 0 ? 0 : totalGainLoss / totalCost,
-      holdingsCount: views.length,
-    };
-  });
-
-  /** Market value grouped by asset class, largest slice first. */
-  readonly allocation = computed<AllocationSlice[]>(() => {
-    const total = this.totalMarketValue();
-    const byClass = new Map<AssetClass, number>();
-    for (const h of this.holdingViews()) {
-      byClass.set(h.assetClass, (byClass.get(h.assetClass) ?? 0) + h.marketValue);
-    }
-    return [...byClass.entries()]
-      .map(([assetClass, value]) => ({
-        assetClass,
-        value,
-        weight: total === 0 ? 0 : value / total,
-      }))
-      .sort((a, b) => b.value - a.value);
-  });
-
-  private readonly totalMarketValue = computed(() =>
-    this.holdingsState().reduce((sum, h) => sum + h.quantity * h.currentPrice, 0),
-  );
-
-  /** CREATE: add a new holding (or top up an existing one) and log a BUY transaction. */
-  addHolding(input: NewHoldingInput): void {
-    const symbol = input.symbol.trim().toUpperCase();
-
-    this.holdingsState.update((holdings) => {
-      const existing = holdings.find((h) => h.symbol === symbol);
-      if (existing) {
-        const totalQty = existing.quantity + input.quantity;
-        const blendedCost =
-          (existing.quantity * existing.avgCost + input.quantity * input.price) / totalQty;
-        return holdings.map((h) =>
-          h.symbol === symbol
-            ? { ...h, quantity: totalQty, avgCost: blendedCost, currentPrice: input.price }
-            : h,
-        );
-      }
-      return [
-        ...holdings,
-        {
-          id: crypto.randomUUID(),
-          symbol,
-          name: input.name.trim(),
-          assetClass: input.assetClass,
-          quantity: input.quantity,
-          avgCost: input.price,
-          currentPrice: input.price,
-        },
-      ];
-    });
-
-    this.logTransaction('BUY', symbol, input.quantity, input.price);
-  }
-
-  /** UPDATE: edit an existing holding's editable fields in place. */
-  updateHolding(id: string, input: NewHoldingInput): void {
-    this.holdingsState.update((holdings) =>
-      holdings.map((h) =>
-        h.id === id
-          ? {
-              ...h,
-              symbol: input.symbol.trim().toUpperCase(),
-              name: input.name.trim(),
-              assetClass: input.assetClass,
-              quantity: input.quantity,
-              avgCost: input.price,
-              currentPrice: input.price,
-            }
-          : h,
-      ),
-    );
-  }
-
-  /** DELETE: sell (reduce or remove) a position and log a SELL transaction. */
-  sellHolding(id: string, quantity: number): void {
-    const holding = this.holdingsState().find((h) => h.id === id);
-    if (!holding) return;
-
-    const soldQty = Math.min(quantity, holding.quantity);
-    this.holdingsState.update((holdings) =>
-      holdings
-        .map((h) => (h.id === id ? { ...h, quantity: h.quantity - soldQty } : h))
-        .filter((h) => h.quantity > 0),
-    );
-
-    this.logTransaction('SELL', holding.symbol, soldQty, holding.currentPrice);
-  }
-
-  private logTransaction(
-    type: Transaction['type'],
-    symbol: string,
-    quantity: number,
-    price: number,
-  ): void {
-    this.transactionsState.update((txns) => [
-      {
-        id: crypto.randomUUID(),
-        date: new Date().toISOString(),
-        type,
-        symbol,
-        quantity,
-        price,
-      },
-      ...txns,
-    ]);
-  }
+/** Payload returned by the API's holdings mutation endpoints. */
+interface PortfolioPayload {
+  holdings: Holding[];
+  transactions: Transaction[];
 }
 
-const SEED_HOLDINGS: Holding[] = [
-  { id: '1', symbol: 'AAPL', name: 'Apple Inc.', assetClass: 'Equity', quantity: 40, avgCost: 165.2, currentPrice: 227.5 },
-  { id: '2', symbol: 'MSFT', name: 'Microsoft Corp.', assetClass: 'Equity', quantity: 25, avgCost: 310.0, currentPrice: 421.9 },
-  { id: '3', symbol: 'FXAIX', name: 'Fidelity 500 Index Fund', assetClass: 'ETF', quantity: 120, avgCost: 150.4, currentPrice: 189.75 },
-  { id: '4', symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', assetClass: 'ETF', quantity: 60, avgCost: 210.0, currentPrice: 268.3 },
-  { id: '5', symbol: 'BND', name: 'Vanguard Total Bond Market ETF', assetClass: 'Bond', quantity: 80, avgCost: 74.5, currentPrice: 72.1 },
-  { id: '6', symbol: 'NVDA', name: 'NVIDIA Corp.', assetClass: 'Equity', quantity: 15, avgCost: 95.0, currentPrice: 138.6 },
-  { id: '7', symbol: 'CASH', name: 'Cash & Money Market', assetClass: 'Cash', quantity: 1, avgCost: 8500, currentPrice: 8500 },
-];
+// Portfolio state: fetches holdings/transactions from the REST API via Axios and exposes them as signals.
+@Injectable({ providedIn: 'root' })
+export class PortfolioService {
+  private readonly holdingsState = signal<Holding[]>([]);
+  private readonly transactionsState = signal<Transaction[]>([]);
 
-const SEED_TRANSACTIONS: Transaction[] = [
-  { id: 't1', date: '2026-09-02T14:31:00Z', type: 'BUY', symbol: 'NVDA', quantity: 15, price: 95.0 },
-  { id: 't2', date: '2026-09-15T13:05:00Z', type: 'BUY', symbol: 'AAPL', quantity: 10, price: 171.4 },
-  { id: 't3', date: '2026-09-28T09:45:00Z', type: 'DIVIDEND', symbol: 'FXAIX', quantity: 120, price: 0.42 },
-  { id: 't4', date: '2026-10-01T15:12:00Z', type: 'SELL', symbol: 'MSFT', quantity: 5, price: 415.0 },
-];
+  /** True once the first load has finished (used to show a loading state). */
+  readonly ready = signal(false);
+  /** Last error message, if a request failed. */
+  readonly error = signal<string | null>(null);
+
+  readonly holdings = this.holdingsState.asReadonly();
+  readonly transactions = this.transactionsState.asReadonly();
+
+  /** Holdings enriched with market value / gain-loss / weight (derived, always in sync). */
+  readonly holdingViews = computed(() => buildHoldingViews(this.holdingsState()));
+  readonly summary = computed(() => buildSummary(this.holdingViews()));
+  readonly allocation = computed(() => buildAllocation(this.holdingViews()));
+
+  /** Load holdings and transactions from the API. */
+  async loadAll(): Promise<void> {
+    try {
+      const [holdings, transactions] = await Promise.all([
+        api.get<Holding[]>('/holdings'),
+        api.get<Transaction[]>('/transactions'),
+      ]);
+      this.holdingsState.set(Array.isArray(holdings.data) ? holdings.data : []);
+      this.transactionsState.set(Array.isArray(transactions.data) ? transactions.data : []);
+      this.error.set(null);
+    } catch {
+      this.error.set('Could not load portfolio data. Is the API server running?');
+    } finally {
+      this.ready.set(true);
+    }
+  }
+
+  /** CREATE: add a new holding (or top up an existing one). */
+  async addHolding(input: NewHoldingInput): Promise<void> {
+    const { data } = await api.post<PortfolioPayload>('/holdings', input);
+    this.applyPayload(data);
+  }
+
+  /** UPDATE: edit an existing holding. */
+  async updateHolding(id: string, input: NewHoldingInput): Promise<void> {
+    const { data } = await api.put<PortfolioPayload>(`/holdings/${id}`, input);
+    this.applyPayload(data);
+  }
+
+  /** DELETE: sell (reduce or remove) a position. */
+  async sellHolding(id: string, quantity: number): Promise<void> {
+    const { data } = await api.post<PortfolioPayload>(`/holdings/${id}/sell`, { quantity });
+    this.applyPayload(data);
+  }
+
+  private applyPayload(payload: PortfolioPayload): void {
+    this.holdingsState.set(payload.holdings);
+    this.transactionsState.set(payload.transactions);
+  }
+}

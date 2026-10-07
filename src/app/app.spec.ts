@@ -1,12 +1,37 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
+import { PortfolioService } from './services/portfolio.service';
+import { ProfileService } from './services/profile.service';
+
+// Stub the services so the shell renders without making real Axios/API calls.
+const portfolioStub = {
+  summary: signal({
+    totalValue: 0,
+    totalCost: 0,
+    totalGainLoss: 0,
+    totalGainLossPct: 0,
+    holdingsCount: 0,
+  }),
+  loadAll: () => Promise.resolve(),
+};
+
+const profileStub = {
+  profile: signal({ fullName: 'Test User', addressLine1: '', city: '', country: '', contacts: [] }),
+  initials: signal('TU'),
+  load: () => Promise.resolve(),
+};
 
 describe('App shell', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: PortfolioService, useValue: portfolioStub },
+        { provide: ProfileService, useValue: profileStub },
+      ],
     }).compileComponents();
   });
 
@@ -27,5 +52,11 @@ describe('App shell', () => {
     await fixture.whenStable();
     const links = (fixture.nativeElement as HTMLElement).querySelectorAll('nav a');
     expect(links.length).toBe(4);
+  });
+
+  it('should show the profile initials in the top bar', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('TU');
   });
 });

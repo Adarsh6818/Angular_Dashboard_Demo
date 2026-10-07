@@ -16,6 +16,8 @@ export class Holdings {
 
   /** Reactive signal of enriched holdings (re-read automatically by the template). */
   protected readonly holdings = this.portfolio.holdingViews;
+  protected readonly ready = this.portfolio.ready;
+  protected readonly error = this.portfolio.error;
   protected readonly assetClasses: AssetClass[] = ['Equity', 'ETF', 'Bond', 'Cash', 'Crypto'];
 
   protected readonly showForm = signal(false);
@@ -57,27 +59,35 @@ export class Holdings {
   }
 
   /** Create a new holding or update the one being edited. */
-  protected submit(): void {
+  protected async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
     const value = this.form.getRawValue();
     const id = this.editingId();
-    if (id) {
-      this.portfolio.updateHolding(id, value);
-    } else {
-      this.portfolio.addHolding(value);
+    try {
+      if (id) {
+        await this.portfolio.updateHolding(id, value);
+      } else {
+        await this.portfolio.addHolding(value);
+      }
+      this.cancel();
+    } catch {
+      this.error.set('Could not save the holding. Please try again.');
     }
-    this.cancel();
   }
 
   /** Sell (delete) a position, prompting for the quantity. */
-  protected sell(h: HoldingView): void {
+  protected async sell(h: HoldingView): Promise<void> {
     const input = prompt(`Sell how many units of ${h.symbol}? (max ${h.quantity})`);
     const qty = Number(input);
     if (Number.isFinite(qty) && qty > 0) {
-      this.portfolio.sellHolding(h.id, qty);
+      try {
+        await this.portfolio.sellHolding(h.id, qty);
+      } catch {
+        this.error.set('Could not sell the holding. Please try again.');
+      }
     }
   }
 

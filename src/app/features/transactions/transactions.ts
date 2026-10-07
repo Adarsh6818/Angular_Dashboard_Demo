@@ -14,6 +14,8 @@ type Filter = 'ALL' | TransactionType;
 export class Transactions {
   private readonly portfolio = inject(PortfolioService);
 
+  protected readonly ready = this.portfolio.ready;
+  protected readonly error = this.portfolio.error;
   protected readonly filters: Filter[] = ['ALL', 'BUY', 'SELL', 'DIVIDEND'];
   protected readonly activeFilter = signal<Filter>('ALL');
 

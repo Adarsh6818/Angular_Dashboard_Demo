@@ -3,6 +3,15 @@
   <p class="mt-1 text-slate-500">A snapshot of your portfolio's value, performance and allocation.</p>
 </div>
 
+@if (error()) {
+  <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+    {{ error() }}
+  </div>
+}
+
+@if (!ready()) {
+  <div class="card text-center text-slate-500">Loading dashboard…</div>
+} @else {
 <!-- Summary cards -->
 <section class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
   <div class="card flex flex-col gap-1">
@@ -88,3 +97,4 @@
     </div>
   </div>
 </section>
+}

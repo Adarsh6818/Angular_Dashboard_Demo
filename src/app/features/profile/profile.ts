@@ -15,6 +15,8 @@ export class Profile {
 
   protected readonly profile = this.profileService.profile;
   protected readonly contacts = this.profileService.contacts;
+  protected readonly ready = this.profileService.ready;
+  protected readonly error = this.profileService.error;
   protected readonly contactTypes: ContactType[] = ['Email', 'Phone', 'Other'];
 
   protected readonly editingDetails = signal(false);
@@ -48,13 +50,17 @@ export class Profile {
     this.editingDetails.set(true);
   }
 
-  protected saveDetails(): void {
+  protected async saveDetails(): Promise<void> {
     if (this.detailsForm.invalid) {
       this.detailsForm.markAllAsTouched();
       return;
     }
-    this.profileService.updateDetails(this.detailsForm.getRawValue());
-    this.editingDetails.set(false);
+    try {
+      await this.profileService.updateDetails(this.detailsForm.getRawValue());
+      this.editingDetails.set(false);
+    } catch {
+      this.error.set('Could not save your details. Please try again.');
+    }
   }
 
   protected startAddContact(): void {
@@ -69,19 +75,23 @@ export class Profile {
     this.showContactForm.set(true);
   }
 
-  protected saveContact(): void {
+  protected async saveContact(): Promise<void> {
     if (this.contactForm.invalid) {
       this.contactForm.markAllAsTouched();
       return;
     }
     const { type, value } = this.contactForm.getRawValue();
     const id = this.editingContactId();
-    if (id) {
-      this.profileService.updateContact(id, type, value);
-    } else {
-      this.profileService.addContact(type, value);
+    try {
+      if (id) {
+        await this.profileService.updateContact(id, type, value);
+      } else {
+        await this.profileService.addContact(type, value);
+      }
+      this.cancelContact();
+    } catch {
+      this.error.set('Could not save the contact. Please try again.');
     }
-    this.cancelContact();
   }
 
   protected cancelContact(): void {
@@ -89,9 +99,13 @@ export class Profile {
     this.editingContactId.set(null);
   }
 
-  protected deleteContact(id: string): void {
+  protected async deleteContact(id: string): Promise<void> {
     if (confirm('Delete this contact?')) {
-      this.profileService.removeContact(id);
+      try {
+        await this.profileService.removeContact(id);
+      } catch {
+        this.error.set('Could not delete the contact. Please try again.');
+      }
     }
   }
 
